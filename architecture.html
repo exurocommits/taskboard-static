@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #111827;
+            color: white;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 72rem;
+            margin: 0 auto;
+        }
+        .header {
+            background: #1f2937;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+        .back-link {
+            display: inline-block;
+            background: #374151;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1.5rem;
+            color: white;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        .back-link:hover {
+            background: #4b5563;
+        }
+        .content {
+            background: #1f2937;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #d1d5db;
+        }
+        .content h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0 1rem 0;
+            color: white;
+        }
+        .content h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.75rem 0;
+            color: white;
+        }
+        .content h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
+            color: white;
+        }
+        .content code {
+            background: #374151;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        .content pre {
+            background: #111827;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            line-height: 1.6;
+        }
+        .content ul, .content ol {
+            margin: 0.5rem 0 0.5rem 1.5rem;
+        }
+        .content li {
+            margin: 0.25rem 0;
+        }
+        .content p {
+            margin: 0.5rem 0;
+        }
+        .mermaid-diagram {
+            background: #111827;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Task Board</a>
+        
+        <div class="header">
+            <h1>🏗 OpenClaw Core Architecture</h1>
+            <p>Detailed system architecture and component relationships</p>
+        </div>
+
+        <div class="content">
+            <h1>Overview</h1>
+            <p>OpenClaw is an autonomous AI assistant running in a containerized environment with:</p>
+            <ul>
+                <li>Gateway daemon for message routing</li>
+                <li>Multiple agent systems (Review Council, specialized skills)</li>
+                <li>GitHub integration for code management</li>
+                <li>Coolify for deployment</li>
+                <li>Supabase for memory/storage</li>
+                <li>Telegram as primary interface</li>
+            </ul>
+
+            <h1>Mermaid Architecture Diagram</h1>
+            <div class="mermaid-diagram">
+                <pre>graph TB
+    subgraph "User Interfaces"
+        TG[Telegram Bot<br/>@openclaw_bot]
+        CLI[OpenClaw CLI]
+        WEB[Dashboard<br/>Task Board]
+    end
+
+    subgraph "Gateway Layer"
+        GW[OpenClaw Gateway<br/>PID: 18789<br/>loopback bind]
+        AUTH[Authentication<br/>Profile management]
+        ROUTER[Message Router<br/>Channel routing]
+        QUEUE[Message Queue<br/>Async processing]
+    end
+
+    subgraph "Core Agent System"
+        MAIN[Main Agent<br/>zai/glm-4.7<br/>Reasoning: off]
+        SPAWN[Session Spawner<br/>Background agents]
+        SUB[Subagent Manager<br/>Orchestration]
+    end
+
+    subgraph "Specialist Agents"
+        DEV[Dev Review Agent<br/>Code quality, security]
+        DEVOPS[DevOps Agent<br/>Infrastructure, observability]
+        MKT[Marketing Agent<br/>UX, design]
+        SUP[Supervisor<br/>Coordination, aggregation]
+    end
+
+    subgraph "Skills & Tools"
+        SKILLS[Skills Directory<br/>/app/skills/*]
+        TOOLS[Tools<br/>web_search, git, browser<br/>nodes, etc]
+        MEMORY[QMD Memory Backend<br/>Semantic search]
+    end
+
+    subgraph "External Services"
+        GH[GitHub<br/>exurocommits]
+        VERCEL[Vercel<br/>Deployment]
+        COOLIFY[Coolify<br/>Container deployments]
+        SUPA[Supabase<br/>DB, Auth, Storage]
+        GPU[GPU Server<br/>Qwen3-30B API]
+    end
+
+    subgraph "Workspace"
+        WS[Workspace<br/>/home/node/.openclaw/workspace]
+        REPOS[7 Project Repositories<br/>quiz-genny, xmas, etc]
+        TASKS[TASK-BOARD.md<br/>Task tracking]
+        MEM[Memory Files<br/>MEMORY.md, daily logs]
+    end
+
+    TG --> GW
+    CLI --> GW
+    WEB --> GW
+
+    GW --> MAIN
+    MAIN --> AUTH
+    AUTH --> ROUTER
+    ROUTER --> QUEUE
+    QUEUE --> MAIN
+
+    MAIN --> SPAWN
+    MAIN --> SUB
+
+    SPAWN --> DEV
+    SPAWN --> DEVOPS
+    SPAWN --> MKT
+
+    DEV --> SUP
+    DEVOPS --> SUP
+    MKT --> SUP
+
+    MAIN --> SKILLS
+    MAIN --> TOOLS
+    MAIN --> MEMORY
+
+    MAIN --> GH
+    MAIN --> VERCEL
+    MAIN --> COOLIFY
+    MAIN --> SUPA
+    MAIN --> GPU
+
+    MAIN --> WS
+    WS --> REPOS
+    WS --> TASKS
+    WS --> MEM</pre>
+            </div>
+
+            <h2>Key Components</h2>
+            
+            <h3>1. Gateway Layer</h3>
+            <p><strong>Purpose:</strong> Message routing, authentication, session management</p>
+            <p><strong>Key Responsibilities:</strong></p>
+            <ul>
+                <li>Route Telegram/CLI messages to appropriate agents</li>
+                <li>Manage active sessions</li>
+                <li>Handle message queues (async processing)</li>
+                <li>Profile switching (default, reasoning, verbose modes)</li>
+                <li>Tool execution with security policies</li>
+            </ul>
+
+            <h3>2. Main Agent</h3>
+            <ul>
+                <li><strong>Model:</strong> zai/glm-4.7 (GLM-4.7 API)</li>
+                <li><strong>Context Window:</strong> 131,072 tokens</li>
+                <li><strong>Max Output:</strong> 8,192 tokens</li>
+                <li><strong>Reasoning:</strong> off (hidden unless enabled)</li>
+            </ul>
+            <p><strong>Responsibilities:</strong></p>
+            <ul>
+                <li>Primary conversational interface</li>
+                <li>Coordinate specialist agents</li>
+                <li>Execute tools and skills</li>
+                <li>Manage workspace and memory</li>
+                <li>Make autonomous decisions</li>
+                <li>Task orchestration</li>
+            </ul>
+
+            <h3>3. Specialist Agents (Review Council)</h3>
+            <p><strong>Dev Review Agent</strong> - Code quality, security, architecture review</p>
+            <p><strong>DevOps Agent</strong> - Infrastructure, observability, operations readiness</p>
+            <p><strong>Marketing Agent</strong> - UX, design, marketing readiness</p>
+            <p><strong>Supervisor Agent</strong> - Coordination, aggregation, decision-making</p>
+
+            <h3>4. Memory System</h3>
+            <ul>
+                <li><strong>Backend:</strong> QMD (qmd-binary)</li>
+                <li><strong>Storage:</strong> MEMORY.md (long-term), memory/YYYY-MM-DD.md (daily logs)</li>
+                <li><strong>Features:</strong> Semantic search, fast retrieval, curated knowledge</li>
+            </ul>
+
+            <h3>5. Tool Layer</h3>
+            <p><strong>Categories:</strong></p>
+            <ul>
+                <li><strong>File Operations:</strong> read, write, edit</li>
+                <li><strong>Code & Git:</strong> exec, web_search, image</li>
+                <li><strong>Communication:</strong> message, sessions_spawn, subagents</li>
+                <li><strong>External Services:</strong> browser, canvas, nodes, cron</li>
+                <li><strong>Memory:</strong> memory_search, memory_get</li>
+            </ul>
+
+            <h2>Message Flow</h2>
+            <pre>User Telegram Message
+         ↓
+OpenClaw Gateway (PID 18789)
+         ↓
+Authentication (Profile Check)
+         ↓
+Message Router
+         ↓
+Queue (Async Processing)
+         ↓
+Main Agent (GLM-4.7)
+         ↓
+Decision:
+    - Spawn subagent? → Session Spawner
+    - Use skill? → /app/skills/
+    - Execute tool? → Tool Layer
+    - Memory recall? → QMD Backend
+    - Review Council? → Specialist Agents
+         ↓
+External Services (GitHub, Coolify, etc.)
+         ↓
+Result/Response
+         ↓
+Telegram Reply</pre>
+
+            <h2>Key Insights</h2>
+            <p><strong>Why OpenClaw is Fast:</strong></p>
+            <ol>
+                <li><strong>Modular Design:</strong> Each agent has clear responsibilities</li>
+                <li><strong>Async Processing:</strong> Message queues prevent blocking</li>
+                <li><strong>Semantic Memory:</strong> QMD retrieves relevant context quickly</li>
+                <li><strong>Tool Layer:</strong> Specialized tools for each task type</li>
+                <li><strong>Review Council:</strong> Parallel evaluation of projects</li>
+                <li><strong>Session Spawner:</strong> Background agents don't block main session</li>
+            </ol>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #374151;">
+            
+            <p style="text-align: center; color: #6b7280; font-size: 0.75rem;">*Last Updated: 2026-02-22 10:20 UTC*</p>
+        </div>
+    </div>
+</body>
+</html>
